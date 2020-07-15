@@ -21,10 +21,11 @@ USAGE: hsmt -e|i|c|s|h [/Path/to/file]<br>
 
 ## 常见用法：<br>
 使用前，需要先挂载启动分区到挂载点，通常是/Volumes/EFI，请根据实际情况填写，例如我的U盘的挂载点是/Volumes/UDISK<br>
-配置文件位于【挂载点】/EFI/OC/config.plist，所以通常是/Volumes/EFI/EFI/OC/config.plist<br>
+配置文件位于【挂载点】/EFI/OC/config.plist，所以完整路径通常是/Volumes/EFI/EFI/OC/config.plist<br>
+下面的命令以此路径为例，请自行替换使用。<br>
 <br>
 
- |功能|命令|
+ |功能|命令行|
  |:---|:---|
  |备份|hsmt -e /Volumes/EFI/EFI/OC/config.plist > ~/Desktop/bak.plist|
  |查看备份|hsmt -s ~/Desktop/bak.plist|
