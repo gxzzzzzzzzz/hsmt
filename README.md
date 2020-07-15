@@ -24,6 +24,10 @@ USAGE: hsmt -e|i|c|s|h [/Path/to/file]<br>
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/gxzzzzzzzzz/hsmt/master/install_hsmt.sh)"<br>
 如果报错，提示需要sudo，则执行下面的指令：<br>
 sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/gxzzzzzzzzz/hsmt/master/install_hsmt.sh)"<br>
+如果提示链接失败，请换用国内镜像：<br>
+bash -c "$(curl -fsSL https://gitee.com/gxzzzzzzzzz/hsmt/raw/master/install_hsmt_gitee.sh)"<br>
+或<br>
+sudo bash -c "$(curl -fsSL https://gitee.com/gxzzzzzzzzz/hsmt/raw/master/install_hsmt_gitee.sh)"<br>
 自动化脚本将帮助您完成hsmt工具的安装。<br>
 
 ---
