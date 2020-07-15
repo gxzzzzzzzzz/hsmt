@@ -1,3 +1,4 @@
+#!/bin/bash
 
 touch /usr/local/bin/hsmt
 [ $? -ne 0 ] && echo "尝试保存文件到/usr/local/bin/hsmt出错，请检查权限设置，或者使用sudo指令重新运行安装脚本。" && exit 1
