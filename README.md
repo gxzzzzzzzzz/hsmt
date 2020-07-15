@@ -19,6 +19,13 @@ USAGE: hsmt -e|i|c|s|h [/Path/to/file]<br>
 
 ---
 
+## 安装方法：<br>
+打开一个终端窗口，输入下面一行指令：<br> 
+bash <(curl -L https://raw.githubusercontent.com/gxzzzzzzzzz/hsmt/master/install_hsmt.sh)<br>
+自动化脚本将帮助您完成hsmt工具的安装。<br>
+
+---
+
 ## 常见用法：<br>
 使用前，需要先挂载启动分区到挂载点，通常是/Volumes/EFI，请根据实际情况填写，例如我的U盘的挂载点是/Volumes/UDISK<br>
 配置文件位于【挂载点】/EFI/OC/config.plist，所以完整路径通常是/Volumes/EFI/EFI/OC/config.plist<br>
