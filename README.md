@@ -22,6 +22,8 @@ USAGE: hsmt -e|i|c|s|h [/Path/to/file]<br>
 ## 安装方法：<br>
 打开一个终端窗口，输入下面一行指令：<br> 
 bash <(curl -L https://raw.githubusercontent.com/gxzzzzzzzzz/hsmt/master/install_hsmt.sh)<br>
+如果报错，提示需要sudo，则执行下面的指令：<br>
+sudo bash <(curl -L https://raw.githubusercontent.com/gxzzzzzzzzz/hsmt/master/install_hsmt.sh)<br>
 自动化脚本将帮助您完成hsmt工具的安装。<br>
 
 ---
