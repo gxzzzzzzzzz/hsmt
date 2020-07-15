@@ -21,18 +21,18 @@ USAGE: hsmt -e|i|c|s|h [/Path/to/file]<br>
 
 ## 安装方法：<br>
 打开一个终端窗口，输入下面一行指令：<br> 
-bash <(curl -L https://raw.githubusercontent.com/gxzzzzzzzzz/hsmt/master/install_hsmt.sh)<br>
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/gxzzzzzzzzz/hsmt/master/install_hsmt.sh)"<br>
 如果报错，提示需要sudo，则执行下面的指令：<br>
-sudo bash <(curl -L https://raw.githubusercontent.com/gxzzzzzzzzz/hsmt/master/install_hsmt.sh)<br>
+sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/gxzzzzzzzzz/hsmt/master/install_hsmt.sh)"<br>
 自动化脚本将帮助您完成hsmt工具的安装。<br>
 
 ---
 
 ## 用法实战：<br>
 使用前，需要先挂载启动分区，查看挂载点，例如我的U盘的挂载点是/Volumes/UDISK<br>
-终端中输入 mount 输出的最后一行 on 后面就是挂载点了。<br>
+终端中输入 mount 回车，最后一行输出 on 后面的就是挂载点了。<br>
 例如：/dev/disk0s1 on **/Volumes/EFI** (msdos, asynchronous, local, noowners)<br>
-配置文件位于【挂载点】/EFI/OC/config.plist，所以完整路径通常是/Volumes/EFI/EFI/OC/config.plist<br>
+上面挂载点就是/Volumes/EFI，配置文件位于【挂载点】/EFI/OC/config.plist，所以完整路径是/Volumes/EFI/EFI/OC/config.plist<br>
 下面的命令以此路径为例，请自行替换使用。<br>
 <br>
 

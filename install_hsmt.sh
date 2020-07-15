@@ -9,7 +9,7 @@ fi
 touch /usr/local/bin/hsmt
 [ $? -ne 0 ] && echo "尝试保存文件到/usr/local/bin/hsmt出错，请检查权限设置，或者使用sudo重新运行安装脚本。" && exit 1
 
-curl https://raw.githubusercontent.com/gxzzzzzzzzz/hsmt/master/hsmt > /usr/local/bin/hsmt
+curl -fsSL https://raw.githubusercontent.com/gxzzzzzzzzz/hsmt/master/hsmt -o /usr/local/bin/hsmt
 [ $? -ne 0 ] && echo "从github获取 hsmt 出错，请检查网络连接是否正常或者多试几次。" && exit 1
 
 chmod +x /usr/local/bin/hsmt
