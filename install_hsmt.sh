@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [ ! -d /usr/local/bin ]; then
+	mkdir -p /usr/local/bin
+	[ $? -ne 0 ] && echo "创建/usr/local/bin目录出错，请检查权限设置，或者使用sudo指令重新运行安装脚本。" && exit 1
+fi
+
 touch /usr/local/bin/hsmt
 [ $? -ne 0 ] && echo "尝试保存文件到/usr/local/bin/hsmt出错，请检查权限设置，或者使用sudo指令重新运行安装脚本。" && exit 1
 
