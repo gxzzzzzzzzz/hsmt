@@ -1,0 +1,272 @@
+#!/bin/bash
+
+my_name="hsmt"
+CFG_file="config.plist"
+BAK_file="hsm.plist"
+EMPTY_xml="<dict><key>AdviseWindows</key><true/><key>MLB</key><string></string><key>ROM</key><data></data><key>SpoofVendor</key><true/><key>SystemProductName</key><string>MacBookPro16,2</string><key>SystemSerialNumber</key><string></string><key>SystemUUID</key><string></string></dict>"
+input_buf=""
+tmp_buf=""
+
+
+usage(){
+	echo ""
+	echo "USAGE: $(basename $0) -e|i|c|s|h [/Path/to/file]"
+	echo ""
+	echo " /Path/to/file		指定配置文件的位置和文件名，默认为当前目录下的config.plist。"	
+	echo "			Specify the location and file name of the configuration file, the default is config.plist in the current directory."
+	echo ""
+	echo " -e			导出配置文件中的三码到标准输出，可输出重定向到备份文件或管道给其他程序继续处理。"
+	echo "  -export		The SMBIOS info in the configuration file are exported to standard output, and the output can be redirected to a backup file."
+	echo "  --export		Example: $(basename $0) -e > ~/Desktop/hsm.plist"
+	echo "  export		Example: $(basename $0) export /Volumes/UDISK/EFI/OC/config.plist > hsm.plist"
+	echo ""
+	echo " -i			导入之前保存的三码信息到配置文件，需要输入重定向或者管道输入。"
+	echo "  -import		Importing the SMBIOS info saved before to the configuration file, requires input redirection or pipeline input."
+	echo "  --import		Example: $(basename $0) -i < ~/Desktop/hsm.plist"
+	echo "  import		Example: cat hsm.plist | $(basename $0) import /Volumes/UDISK/EFI/OC/config.plist"
+	echo ""
+	echo " -c			清理配置文件中的三码信息，建议分享EFI前先执行本操作。(当前仅支持OC的配置文件，clover支持请留意后续版本更新)"
+	echo "  -clean		To clean up the SMBIOS info in the configuration file, it's recommended to perform this operation before sharing your EFI. (Currently OC only)"
+	echo "  --clean		Example: $(basename $0) -c"
+	echo "  clean			Example: $(basename $0) clean /Volumes/UDISK/EFI/OC/config.plist"
+	echo ""
+	echo " -s			以直观方式显示配置文件/备份文件中的三码。"
+	echo "  -show			Visually display the SMBIOS info in the configuration/backup file."
+	echo "  --show		Example: $(basename $0) -s"
+	echo "  show			Example: $(basename $0) show /Volumes/UDISK/EFI/OC/config.plist"
+	echo ""
+	echo " -h			显示帮助信息。"
+	echo "  -help			Display this help information."
+	echo "  --help		Example: $(basename $0) -h"
+	echo "  help			Example: $(basename $0) help"
+	echo ""
+}
+
+help(){
+	echo ""
+	echo "黑苹果三码导入/导出工具。功能简单，风格比较Linux/Unix，方便维护自己的三码信息。"
+	echo "Hackintosh SMBIOS import/export tool. Convenient to maintain your SMBIOS info."
+	usage
+}
+
+read_key_from_buf(){
+	[ $# -ne 1 ] && echo "函数read_key_from_buf()出错。arg=$@" >&2 && return 11
+
+	key=$1
+
+	echo "${input_buf}" | plutil -lint - &> /dev/null
+	rt=$?
+	[ $rt -ne 0 ] && echo "step1. 缓冲区 格式错误($rt).">&2 && return 12
+
+	echo "${input_buf}" | plutil -extract $key xml1 - -o - &> /dev/null
+	rt=$?
+	[ $rt -ne 0 ] && echo "step2. 缓冲区 内容错误，找不到key $key ($rt).">&2 && return 13
+
+	echo "${input_buf}" | plutil -extract $key xml1 - -o - | plutil -p -
+	
+	return 0
+}
+
+read_key_from_file(){
+	[ $# -ne 2 ] && echo "函数read_key_from_file()出错。arg=$@" >&2 && return 11
+
+	fn=$1
+	key=$2
+
+	plutil -lint $fn &> /dev/null
+	rt=$?
+	[ $rt -ne 0 ] && echo "step1. 文件 $fn 格式错误($rt).">&2 && return 12
+
+	plutil -extract $key xml1 $fn -o - &> /dev/null
+	rt=$?
+	[ $rt -ne 0 ] && echo "step2. 文件 $fn 内容错误，找不到key $key ($rt).">&2 && return 13
+
+	plutil -extract $key xml1 $fn -o - | plutil -p -
+	
+	return 0
+}
+
+is_cfg(){
+	rt=0
+	[ $# -ne 1 ] && echo "函数is_cfg()出错。arg=$@" >&2 && return 21
+
+	read_key_from_file $1 "PlatformInfo.Generic.SystemProductName" &> /dev/null
+	rt=$?
+
+	#echo "is_cfg = $rt"
+	return $rt
+}
+
+is_bak(){
+	rt=0
+	[ $# -ne 1 ] && echo "函数is_bak()出错。arg=$@" >&2 && return 31
+
+	read_key_from_file $1 "SystemProductName" &>/dev/null
+	rt=$?
+
+	#echo "is_bak = $rt"
+	return $rt
+}
+
+export(){
+	rt=0
+	in_file=${CFG_file}
+
+	[ $# -gt 1 ] &&	echo "参数错误，请检查后重试。Parameter error, please check." && exit 1
+	[ $# -eq 1 ] &&	in_file=$1
+
+	[ ! -r $in_file ] && echo "文件"${in_file}"不存在，请检查后重试。" && exit 1
+
+	is_bak ${in_file} && echo "文件 ${in_file} 是备份文件，不需要导出。" && exit 1
+
+	plutil -lint ${in_file} &> /dev/null
+	rt=$?
+	[ $rt -ne 0 ] && echo "文件"${in_file}"格式错误，请检查后重试。" && exit $rt
+
+        plutil -extract PlatformInfo.Generic.SystemProductName xml1 ${in_file} -o - &> /dev/null
+        rt=$?
+        [ $rt -ne 0 ] && echo -e "文件"${in_file}"内容错误,找不到三码。" && exit $rt;
+
+	plutil -extract PlatformInfo.Generic xml1 ${in_file} -o -
+	rt=$?
+	[ $rt -ne 0 ] && echo -e "导出三码时发生意外错误。($rt)\n命令行：plutil -extract PlatformInfo.Generic xml1 ${in_file} -o -" && exit $rt
+	exit 0
+}
+
+import(){
+
+	rt=0
+        out_file=${CFG_file}
+	input_buf=$(cat)
+	tmp_buf=""
+
+	[ "x" = "x${input_buf}" ] && echo "读取输入失败，请查看帮助。" && exit 1
+
+	[ $# -gt 1 ] &&	echo "参数错误，请检查后重试。Parameter error, please check." && exit 1
+	[ $# -eq 1 ] && out_file=$1
+
+	[ ! -w $out_file ] && echo "文件"${out_file}"不存在或者无法改写。请检查后重试。" && exit 1
+
+	v1=$(read_key_from_buf "SystemProductName")
+	[ "x" = "x${v1}" ] && echo "发生错误，从输入读取key "SystemProductName" 失败。" && exit 1
+	#echo v1=$v1
+
+	v2=$(read_key_from_file ${out_file} "PlatformInfo.Generic.SystemProductName")
+	[ "x" = "x${v2}" ] && echo "发生错误，从配置文件"${out_file}"读取key "SystemProductName" 失败。" && exit 1
+	#echo v2=$v2
+
+	[ ${v1} != ${v2} ] && echo "导入失败。"SystemProductName" 不匹配！机型不同不能混用配置文件。in(${v1}) != out(${v2})" && exit 1 
+
+	old_file="${out_file}-$(date +%Y%m%d%H%M%S)"
+	cp $out_file ${old_file} &> /dev/null
+	rt=$?
+        [ $rt -ne 0 ] && echo -e "不能备份文件 "$out_file" 到 "$old_file"，请检查目录权限。" && exit 1
+
+	tmp_buf=$(echo ${input_buf}|sed 's/^[[:space:]]*//;s/[[:space:]]*$//'|tr -d "\n"|sed 's:.*<plist version="1.0">::;s:</plist>::')
+	#echo $tmp_buf
+
+	plutil -replace PlatformInfo.Generic -xml "${tmp_buf}" ${out_file} &>/dev/null
+	rt=$?
+	[ $rt -ne 0 ] && rm -f ${old_file} && echo -e "导入三码时发生意外错误。($rt)\n命令行: plutil -replace PlatformInfo.Generic -xml ${tmp_buf} ${out_file}" && exit 1
+
+	echo "三码已导入配置文件 ${out_file} 中，请使用${my_name} show ${out_file} 命令确认。"
+	exit 0
+}
+
+clean(){
+
+	rt=0
+        out_file=${CFG_file}
+	tmp_buf=""
+
+	[ $# -gt 1 ] &&	echo "参数错误，请检查后重试。Parameter error, please check." && exit 1
+	[ $# -eq 1 ] &&	out_file=$1
+
+	[ ! -w $out_file ] && echo "文件"${out_file}"不存在或者无法改写，请检查后重试。" && exit 1
+
+	is_bak ${out_file} && echo "文件 ${out_file} 是备份文件，不能清理。" && exit 1
+
+	v2=$(read_key_from_file ${out_file} "PlatformInfo.Generic.SystemProductName")
+	[ "x" = "x${v2}" ] && echo "发生错误，从配置文件"${out_file}"读取key "SystemProductName" 失败。" && exit 1
+	#echo v2=$v2
+
+	old_file="${out_file}-$(date +%Y%m%d%H%M%S)"
+	cp $out_file ${old_file} &> /dev/null
+	rt=$?
+        [ $rt -ne 0 ] && echo -e "不能备份文件 "$out_file" 到 "$old_file"，请检查目录权限。" && exit 1
+
+	tmp_buf=${EMPTY_xml}
+	#echo $tmp_buf
+
+	plutil -replace PlatformInfo.Generic -xml "${tmp_buf}" ${out_file} &>/dev/null
+	rt=$?
+	[ $rt -ne 0 ] && echo -e "清理三码时发生意外错误。($rt)\n命令行: plutil -replace PlatformInfo.Generic -xml ${tmp_buf} ${out_file}" && exit 1
+	
+	plutil -replace PlatformInfo.Generic.SystemProductName -xml ${v2} ${out_file} &>/dev/null
+	rt=$?
+	[ $rt -ne 0 ] && echo -e "清理三码时发生意外错误。($rt)\n命令行: plutil -replace PlatformInfo.Generic.SystemProductName -xml ${v2} ${out_file}" && exit 1
+
+	echo "配置文件 ${out_file} 三码已清理，请使用${my_name} show ${out_file} 命令确认。"
+	exit 0
+}
+
+show(){
+
+	rt=0
+        in_file=${CFG_file}
+
+	[ $# -gt 1 ] &&	echo "参数错误，请检查后重试。Parameter error, please check." && exit 1
+	[ $# -eq 1 ] &&	in_file=$1
+	
+	[ ! -r $in_file ] && echo "文件"${in_file}"不存在，请检查后重试。" && exit 1
+
+	if is_cfg ${in_file} ; then
+
+		echo "配置文件 ${in_file} 中的三码信息："
+		plutil -extract "PlatformInfo.Generic" xml1 ${in_file} -o - | plutil -p -
+	
+		exit 0
+	fi
+
+	if is_bak ${in_file} ; then
+
+		echo "备份文件 ${in_file} 中的三码信息："
+		plutil -p ${in_file}
+	
+		exit 0
+	fi
+
+	echo "文件 ${in_file} 不是有效的配置/备份文件。"
+	exit 1
+}
+
+[ $# -lt 1 ] && help && exit 0
+my_name=$(basename $0)
+        
+case "$1" in 
+	-e|-export|--export|export)
+		shift
+		export $@
+		;;
+	-i|-import|--import|import)
+		shift
+		import $@
+		;;
+	-c|-clean|--clean|clean)
+		shift
+		clean $@
+		;;
+	-s|-show|--show|show)
+		shift
+		show $@
+		;;
+	-h|-help|--help|help)
+		help
+		;;
+	*)
+		echo "参数错误，请检查后重试。"
+		exit 1
+		;;
+esac
+
+
